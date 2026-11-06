@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#FFFFFF"
+    android:fitsSystemWindows="true">
+
+    <!-- 顶栏 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp">
+
+        <TextView
+            android:id="@+id/btnBack"
+            android:layout_width="38dp"
+            android:layout_height="38dp"
+            android:gravity="center"
+            android:text="←"
+            android:textSize="20sp"
+            android:textColor="#6B7280"
+            android:background="@drawable/bg_round_btn" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginLeft="12dp"
+            android:text="设置"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            android:textColor="#1A1C1F" />
+
+        <TextView
+            android:id="@+id/btnSave"
+            android:layout_width="wrap_content"
+            android:layout_height="34dp"
+            android:gravity="center"
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp"
+            android:text="保存"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:background="@drawable/bg_send" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="28dp">
+
+            <!-- ========== 模型配置 ========== -->
+            <TextView
+                style="@style/SecTitle"
+                android:text="模型配置" />
+
+            <TextView
+                style="@style/FieldLabel"
+                android:text="接口地址（baseURL）" />
+
+            <EditText
+                android:id="@+id/etBase"
+                style="@style/Inp"
+                android:hint="https://api.deepseek.com"
+                android:inputType="textUri" />
+
+            <TextView
+                style="@style/FieldLabel"
+                android:text="API Key（只存在本机）" />
+
+            <EditText
+                android:id="@+id/etKey"
+                style="@style/Inp"
+                android:hint="sk-..."
+                android:inputType="text" />
+
+            <TextView
+                style="@style/FieldLabel"
+                android:text="模型" />
+
+            <EditText
+                android:id="@+id/etModel"
+                style="@style/Inp"
+                android:hint="deepseek-flash"
+                android:inputType="text" />
+
+            <TextView
+                android:id="@+id/btnPing"
+                android:layout_width="wrap_content"
+                android:layout_height="38dp"
+                android:layout_marginTop="10dp"
+                android:gravity="center"
+                android:paddingLeft="18dp"
+                android:paddingRight="18dp"
+                android:text="测试连接"
+                android:textSize="14sp"
+                android:textColor="#2F6BFF"
+                android:background="@drawable/bg_chip" />
+
+            <TextView
+                android:id="@+id/tvPing"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:textSize="12.5sp"
+                android:textColor="#6B7280"
+                android:text="" />
+
+            <!-- ========== 教学 ========== -->
+            <TextView
+                style="@style/SecTitle"
+                android:text="教学" />
+
+            <TextView
+                style="@style/FieldLabel"
+                android:text="教学模式（切换后提示词会跟着换）" />
+
+            <RadioGroup
+                android:id="@+id/rgMode"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <RadioButton
+                    android:id="@+id/rbGuide"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="引导式　只问不答，让他自己想"
+                    android:textSize="14sp"
+                    android:textColor="#1A1C1F" />
+
+                <RadioButton
+                    android:id="@+id/rbTeach"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="讲解式　一步步讲清楚"
+                    android:textSize="14sp"
+                    android:textColor="#1A1C1F" />
+
+                <RadioButton
+                    android:id="@+id/rbAnswer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="直答式　先给答案再解析"
+                    android:textSize="14sp"
+                    android:textColor="#1A1C1F" />
+            </RadioGroup>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="提示词（可直接编辑）"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:textColor="#1A1C1F" />
+
+                <TextView
+                    android:id="@+id/btnResetPrompt"
+                    android:layout_width="wrap_content"
+                    android:layout_height="30dp"
+                    android:gravity="center"
+                    android:paddingLeft="12dp"
+                    android:paddingRight="12dp"
+                    android:text="恢复默认"
+                    android:textSize="12.5sp"
+                    android:textColor="#6B7280"
+                    android:background="@drawable/bg_chip" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="6dp"
+                android:text="{{学习档案}} 是占位符，发消息时会替换成你的薄弱点；删掉它就等于关掉档案注入。"
+                android:textSize="12sp"
+                android:textColor="#9AA0A6" />
+
+            <EditText
+                android:id="@+id/etPrompt"
+                android:layout_width="match_parent"
+                android:layout_height="360dp"
+                android:gravity="top|left"
+                android:background="@drawable/bg_input"
+                android:padding="10dp"
+                android:inputType="textMultiLine"
+                android:textSize="11.5sp"
+                android:textColor="#39424E"
+                android:scrollbars="vertical" />
+
+            <!-- ========== 语音 ========== -->
+            <TextView
+                style="@style/SecTitle"
+                android:text="语音" />
+
+            <CheckBox
+                android:id="@+id/cbTts"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="朗读板书"
+                android:textSize="14sp"
+                android:textColor="#1A1C1F" />
+
+            <CheckBox
+                android:id="@+id/cbDigest"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="只念讲稿，不逐条念板书"
+                android:textSize="14sp"
+                android:textColor="#1A1C1F" />
+
+            <TextView
+                android:id="@+id/tvRate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="语速　1.0x"
+                android:textSize="13sp"
+                android:textColor="#1A1C1F" />
+
+            <SeekBar
+                android:id="@+id/sbRate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="80"
+                android:progress="40" />
+
+            <!-- ========== 关于 ========== -->
+            <TextView
+                style="@style/SecTitle"
+                android:text="关于" />
+
+            <ImageView
+                android:layout_width="104dp"
+                android:layout_height="104dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="6dp"
+                android:src="@drawable/ic_doubao"
+                android:scaleType="fitCenter" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:gravity="center"
+                android:text="肥鱼老师"
+                android:textSize="21sp"
+                android:textStyle="bold"
+                android:textColor="#1A1C1F" />
+
+            <TextView
+                android:id="@+id/tvVersion"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:gravity="center"
+                android:text=""
+                android:textSize="12.5sp"
+                android:textColor="#9AA0A6" />
+
+            <TextView
+                android:id="@+id/tvBackend"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:gravity="center"
+                android:text=""
+                android:textSize="12.5sp"
+                android:textColor="#6B7280" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="center"
+                android:text="Key 只保存在本机，不会上传。也可以写在 /sdcard/Download/Operit/doubao/api.txt 里，代码中不保存任何 Key。"
+                android:textSize="11.5sp"
+                android:textColor="#B0B6BF" />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

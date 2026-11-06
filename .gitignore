@@ -1,0 +1,24 @@
+# 构建产物（App）
+app/build/
+app/bin/
+app/gen/
+toolpkg/dist/
+*.class
+*.dex
+
+# 签名与凭据：绝不入库
+*.jks
+*.keystore
+*.p12
+api.txt
+key.txt
+secret*
+sk-*
+*.credentials*
+
+# 系统垃圾
+.DS_Store
+*.log
+
+# 注意：toolpkg/resources/doubaoteacher.apk 是插件运行必需的资源，必须入库，
+# 所以这里不要写全局 *.apk 忽略规则。

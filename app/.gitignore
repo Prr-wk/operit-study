@@ -1,0 +1,23 @@
+# 构建产物
+build/
+bin/
+gen/
+*.apk
+*.class
+*.dex
+
+# 签名
+*.jks
+*.keystore
+*.p12
+
+# 任何形式的 Key，绝不入库
+api.txt
+key.txt
+secret*
+sk-*
+*.credentials*
+
+# 系统垃圾
+*.log
+.DS_Store

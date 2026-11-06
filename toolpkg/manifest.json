@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "toolpkg_id": "com.operit.study_assistant",
+  "version": "0.3.0",
+  "api_version": "1.0.1",
+  "author": "Operit AI",
+  "main": "main.js",
+  "display_name": {
+    "zh": "学习助手",
+    "en": "Study Assistant"
+  },
+  "description": {
+    "zh": "学习档案引擎（学科/知识点/权重+错题本）与课堂控件（当堂检测选择题、函数图像、几何圈画）。系统讲题由「肥鱼老师」App 负责。",
+    "en": "Study profile engine (subject/knowledge/weight + mistake book) with generative teaching widgets."
+  },
+  "subpackages": [
+    {
+      "id": "study_profile",
+      "entry": "packages/study_profile.js",
+      "enabled_by_default": true,
+      "display_name": {
+        "zh": "学习档案",
+        "en": "Study Profile"
+      },
+      "description": {
+        "zh": "学科知识点权重档案与错题本，支持权重衰减、选题、导入导出。",
+        "en": "Subject/knowledge weight profile and mistake book with decay, question picking, import/export."
+      }
+    },
+    {
+      "id": "teacher_app",
+      "entry": "packages/teacher_app.js",
+      "enabled_by_default": true,
+      "display_name": {
+        "zh": "肥鱼老师",
+        "en": "Teacher App"
+      },
+      "description": {
+        "zh": "内置讲题 App 安装包，未安装时自动安装。",
+        "en": "Bundles the Teacher App APK."
+      }
+    }
+  ],
+  "resources": [
+    {
+      "key": "doubaoteacher_apk",
+      "path": "resources/doubaoteacher.apk",
+      "mime": "application/vnd.android.package-archive"
+    }
+  ]
+}

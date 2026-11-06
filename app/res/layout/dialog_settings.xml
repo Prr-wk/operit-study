@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingLeft="20dp"
+    android:paddingRight="20dp"
+    android:paddingTop="8dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="接口地址 baseURL"
+            android:textSize="13sp"
+            android:textColor="#6B7280" />
+
+        <EditText
+            android:id="@+id/etBase"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="https://ark.cn-beijing.volces.com/api/v3"
+            android:textSize="14sp"
+            android:inputType="textUri" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="API Key"
+            android:textSize="13sp"
+            android:textColor="#6B7280" />
+
+        <EditText
+            android:id="@+id/etKey"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="sk-... 或 ARK APIKey"
+            android:textSize="14sp"
+            android:inputType="textPassword" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="模型 model"
+            android:textSize="13sp"
+            android:textColor="#6B7280" />
+
+        <EditText
+            android:id="@+id/etModel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="doubao-seed-1-6-250615 / gpt-4o / deepseek-flash"
+            android:textSize="14sp"
+            android:inputType="text" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:text="讲解模式"
+            android:textSize="13sp"
+            android:textColor="#6B7280" />
+
+        <RadioGroup
+            android:id="@+id/rgMode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <RadioButton
+                android:id="@+id/rbGuide"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="引导式（只提问，不直给答案）"
+                android:textSize="14sp" />
+
+            <RadioButton
+                android:id="@+id/rbTeach"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="讲解式（按步骤细讲）"
+                android:textSize="14sp" />
+
+            <RadioButton
+                android:id="@+id/rbAnswer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="直给答案 + 解析"
+                android:textSize="14sp" />
+        </RadioGroup>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="追加要求（可留空）"
+            android:textSize="13sp"
+            android:textColor="#6B7280" />
+
+        <EditText
+            android:id="@+id/etExtra"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minLines="2"
+            android:gravity="top"
+            android:hint="例：我是高一学生，用新高考卷题型讲"
+            android:textSize="14sp"
+            android:inputType="textMultiLine" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="板书 / 朗读"
+            android:textSize="13sp"
+            android:textColor="#6B7280" />
+
+        <CheckBox
+            android:id="@+id/cbBoard"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="板书模式（公式排版 + 分步 + 图像）"
+            android:textSize="14sp" />
+
+        <CheckBox
+            android:id="@+id/cbTts"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="语音朗读（用系统 TTS 念板书）"
+            android:textSize="14sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="Key 只保存在本机，不经过任何第三方服务器。"
+            android:textSize="11sp"
+            android:textColor="#9AA0A6" />
+    </LinearLayout>
+</ScrollView>

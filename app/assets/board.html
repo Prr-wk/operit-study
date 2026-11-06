@@ -1,0 +1,1664 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<link rel="stylesheet" href="katex/katex.min.css">
+<script src="katex/katex.min.js"></script>
+<style>
+  /* 讲义式板书：没有气泡、没有头像，直接铺在页面上 */
+  :root{
+    --ink:#12151a; --ink2:#2b2f36; --ink3:#9aa0a6;
+    --card-blue:#F2F5FB; --card-green:#EBF8F0; --card-purple:#F4F1FF;
+    --brand:#2f6bff; --note:#7c5cff; --ok:#0c9b52;
+    --line:#e8eaee;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;background:transparent;}
+  body{
+    font-family:-apple-system,"PingFang SC","Noto Sans CJK SC",system-ui,sans-serif;
+    color:var(--ink); font-size:15.5px; line-height:1.72;
+    padding:6px 2px 10px;
+  }
+  #board{display:flex;flex-direction:column;}
+
+  /* ---------- 步骤：标题在页面上，内容进卡片 ---------- */
+  .blk{margin:0 0 6px;}
+  .blk + .blk{margin-top:14px;}
+  .stitle{
+    font-size:17.5px; font-weight:800; color:var(--ink);
+    line-height:1.42; margin:16px 0 9px; letter-spacing:.2px;
+  }
+  .card{
+    background:var(--card-blue);
+    border-radius:18px;
+    padding:13px 16px;
+    font-size:15.5px; line-height:1.72; color:var(--ink2);
+    overflow:hidden;
+  }
+  .card.green{background:var(--card-green);}
+  .card.purple{background:var(--card-purple);}
+  .card p{margin:0 0 8px;}
+  .card p:last-child{margin-bottom:0;}
+  .card strong{font-weight:700;color:var(--ink);}
+
+  /* 公式：居中、略大 */
+  .katex{font-size:1.06em;}
+  .katex-display{
+    text-align:center; margin:11px 0; font-size:1.12em;
+    overflow-x:auto; overflow-y:hidden; padding:2px 0;
+  }
+  .card .katex-display:first-child{margin-top:2px;}
+  .card .katex-display:last-child{margin-bottom:2px;}
+
+  /* note：键值行 + 结论行 */
+  .kv{display:flex; gap:6px; margin:2px 0;}
+  .kv .k{flex:none; font-weight:700; color:var(--note);}
+  .kv .v{flex:1; min-width:0;}
+  .arrow{
+    margin:8px -4px 0; padding:8px 12px; background:#fff;
+    border-radius:12px; font-weight:700; color:var(--ink);
+  }
+
+  /* key：绿色确认（无标题，勾在最前） */
+  .okcard{display:flex; gap:8px; align-items:flex-start;}
+  .okcard .tick{flex:none; color:var(--ok); font-weight:800;}
+
+  /* quiz：白卡 + 边框 */
+  .card.white{background:#fff; border:1px solid var(--line);}
+  .opt{
+    display:flex; gap:8px; margin:7px 0; padding:9px 12px;
+    border:1px solid var(--line); border-radius:12px; background:#fcfcfd;
+    font-size:15px; color:var(--ink2);
+  }
+  .opt .lab{flex:none; font-weight:700;}
+  .opt.right{border-color:var(--ok); background:var(--card-green);}
+  .opt.wrong{border-color:#e5484d; background:#fdf1f1;}
+  .ans{margin-top:9px; font-size:14.5px; color:var(--ok); font-weight:700; display:none;}
+  .exp{margin-top:5px; font-size:14.5px; color:var(--ink2); display:none;}
+  .quizdone .ans, .quizdone .exp{display:block;}
+
+  /* plot */
+  .plot canvas{
+    width:100%; display:block; border-radius:14px;
+    background:#fbfcfe; border:1px solid var(--line);
+  }
+  .plot .cap{font-size:12px; color:var(--ink3); margin:4px 0 0 2px;}
+
+  /* 用户插话：一行细条，不是气泡 */
+  .turn{margin:8px 0;}
+  .usay{
+    background:#F4F5F7; border-radius:12px; padding:8px 12px;
+    margin:16px 0 6px; font-size:14.5px; line-height:1.65; color:#5b6472;
+  }
+  .usay .who{color:#a8aeb8; margin-right:5px;}
+  .usay img{max-width:100%; border-radius:10px; margin-top:6px; display:block;}
+
+  /* concept 概念卡 */
+  .card.blue{background:#EFF5FF;}
+  .concept-tag{
+    display:inline-block; font-size:11.5px; font-weight:700; color:#2f6bff;
+    background:#dde9ff; border-radius:6px; padding:1px 7px; margin-right:6px;
+    vertical-align:1px;
+  }
+  /* compare 辨析比较：两列 */
+  .cmp{border-radius:18px; overflow:hidden; border:1px solid var(--line); background:#fff;}
+  .cmp-row{display:flex; border-top:1px solid var(--line);}
+  .cmp-row:first-child{border-top:none; background:#F7F9FC;}
+  .cmp-row .l{
+    flex:1; min-width:0; padding:9px 12px; font-weight:700; color:var(--ink);
+    font-size:14.5px; border-right:1px solid var(--line);
+  }
+  .cmp-row .r{flex:1.35; min-width:0; padding:9px 12px; font-size:14.5px; color:var(--ink2);}
+  /* flow 流程 */
+  .flow{display:flex; flex-wrap:wrap; align-items:center; gap:6px; padding:4px 0;}
+  .flow .node{
+    background:#fff; border:1px solid #d8e2f5; border-radius:11px;
+    padding:7px 11px; font-size:14.5px; color:var(--ink2);
+  }
+  .flow .arw{color:#b9c6dc; font-size:13px;}
+  /* chart 数据图 */
+  .chart canvas{width:100%; display:block; border-radius:14px; background:#fbfcfe; border:1px solid var(--line);}
+  .chart .cap{font-size:12px; color:var(--ink3); margin:4px 0 0 2px;}
+  /* formula 公式块 */
+  .fbox{
+    background:#F2F5FB; border-radius:16px; padding:6px 16px 10px;
+    text-align:center;
+  }
+  .fbox .fname{font-size:11.5px; color:#9aa0a6; text-align:left; padding-top:6px;}
+  .fbox .katex-display{margin:8px 0; font-size:1.2em;}
+
+  /* 小测后的自评按钮 */
+  .evalrow{display:flex; gap:8px; margin-top:11px; flex-wrap:wrap;}
+  .evalbtn{
+    flex:1; min-width:86px; text-align:center; padding:9px 4px;
+    border:1px solid #dfe4ec; border-radius:11px; background:#fff;
+    font-size:13.5px; color:#4b5563;
+  }
+  .evalbtn.on{border-color:var(--brand); color:var(--brand); background:#EFF5FF; font-weight:700;}
+  .evalbtn.dim{opacity:.45;}
+  /* 开放题作答 */
+  .askbox{margin-top:10px;}
+  .askbox textarea{
+    width:100%; min-height:62px; border:1px solid var(--line); border-radius:12px;
+    padding:10px 12px; font-size:15px; line-height:1.6; font-family:inherit;
+    color:var(--ink); background:#fff; resize:vertical; outline:none;
+  }
+  .askbox textarea:focus{border-color:var(--brand);}
+  .subrow{display:flex; justify-content:flex-end; align-items:center; gap:8px; margin-top:8px;}
+  .subhint{font-size:12px; color:var(--ink3); margin-right:auto;}
+  .askbtn{
+    background:var(--brand); color:#fff; border:none; border-radius:12px;
+    padding:9px 18px; font-size:14.5px; font-weight:600;
+  }
+  .askbtn[disabled]{opacity:.35;}
+
+  /* talk：页面上的灰字，默认两行，点开全文 */
+  .talk{
+    margin-top:16px; padding-top:12px; border-top:1px dashed var(--line);
+    font-size:14.5px; line-height:1.8; color:#98a0ab;
+  }
+  .talk-b{
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+    overflow:hidden;
+  }
+  .talk.open .talk-b{display:block; overflow:visible;}
+  .talk-h{margin-top:6px; font-size:12.5px; color:#b8bec8;}
+
+  .foot{text-align:center; font-size:11px; color:#c8ccd3; margin:14px 0 2px;}
+
+  .typing-i{display:inline-flex;gap:4px;align-items:center;padding:6px 2px;}
+  .typing-i i{width:6px;height:6px;border-radius:50%;background:var(--ink3);animation:bo 1.2s infinite;}
+  .typing-i i:nth-child(2){animation-delay:.15s;}
+  .typing-i i:nth-child(3){animation-delay:.3s;}
+  .typing-t{font-size:13px;color:var(--ink3);margin-left:6px;}
+  @keyframes bo{0%,60%,100%{transform:none;opacity:.5;}30%{transform:translateY(-4px);opacity:1;}}
+/* ================= v3 新增卡片体系 ================= */
+  .cardtitle{font-size:12.5px;font-weight:700;color:#8b93a1;margin:0 0 7px;letter-spacing:.4px;}
+  /* overview 讲解全貌 */
+  .ovlist{display:flex;flex-direction:column;gap:7px;}
+  .ovitem{display:flex;gap:10px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 12px;}
+  .ovnum{flex:none;width:22px;height:22px;border-radius:7px;background:#EFF5FF;color:#2f6bff;font-size:12.5px;font-weight:800;text-align:center;line-height:22px;}
+  .ovt{font-weight:700;font-size:15px;line-height:1.5;}
+  .ovd{font-size:13.5px;color:#8b93a1;line-height:1.6;margin-top:1px;}
+  /* mistake 知识辨识 */
+  .mkline{display:flex;gap:8px;border-radius:13px;padding:9px 12px;font-size:14.5px;line-height:1.68;}
+  .mkline + .mkline{margin-top:7px;}
+  .mkline.bad{background:#FDEDED;color:#8a3b3b;}
+  .mkline.good{background:#EDF9F1;color:#215f3a;}
+  .mkline + .mkline.good{margin-top:5px;}
+  .mkic{flex:none;font-weight:800;}
+  /* proscons 利弊 */
+  .pc{display:flex;gap:8px;}
+  .pc-col{flex:1;min-width:0;border-radius:14px;padding:10px 11px;}
+  .pc-col.p{background:#EDF9F1;}
+  .pc-col.c{background:#FDEDED;}
+  .pc-h{font-size:13px;font-weight:800;margin-bottom:5px;}
+  .pc-col.p .pc-h{color:#187a41;}
+  .pc-col.c .pc-h{color:#b23c3c;}
+  .pc-li{font-size:14px;line-height:1.62;margin:4px 0;padding-left:12px;position:relative;color:#39424e;}
+  .pc-li:before{content:'';position:absolute;left:2px;top:8px;width:4px;height:4px;border-radius:50%;background:#b9c2cf;}
+  /* cause 因果链 */
+  .czn{background:#F2F5FB;border-radius:12px;padding:9px 12px;font-size:14.5px;line-height:1.66;}
+  .czn.first{background:#E8EFFF;font-weight:700;color:#1f4fc4;}
+  .czarrow{text-align:center;color:#c3cfe2;font-size:14px;line-height:1.2;margin:1px 0;}
+  /* table 表格 */
+  .tbwrap{border:1px solid var(--line);border-radius:14px;overflow-x:auto;}
+  .tb{width:100%;border-collapse:collapse;font-size:14px;}
+  .tb th{background:#F4F8FD;font-weight:700;color:#2b3a4d;padding:8px 10px;text-align:left;white-space:nowrap;}
+  .tb td{padding:8px 10px;border-top:1px solid var(--line);color:#39424e;vertical-align:top;}
+  /* tree 层级 */
+  .tree{font-size:14.5px;line-height:1.95;}
+  .tr-row{display:flex;align-items:baseline;gap:6px;}
+  .tr-dot{flex:none;color:#c3cfe2;font-size:11px;}
+  .tr-name{font-weight:700;color:var(--ink);}
+  .tr-desc{color:#8b93a1;font-size:13.5px;}
+  .tr-wrap{border-left:1px dashed #dde3ec;margin-left:7px;padding-left:11px;}
+  /* steps 步骤指引 */
+  .stp{display:flex;gap:10px;margin:9px 0;}
+  .stpn{flex:none;width:26px;height:26px;border-radius:8px;background:#22406e;color:#fff;font-weight:800;font-size:13.5px;text-align:center;line-height:26px;}
+  .stpt{flex:1;min-width:0;padding-top:1px;}
+  .stph{font-weight:700;font-size:15px;line-height:1.55;}
+  .stpd{font-size:14px;color:#5b6472;line-height:1.68;margin-top:1px;}
+  /* word 单词卡 */
+  .wdtop{display:flex;align-items:center;gap:10px;}
+  .wdword{flex:1;min-width:0;font-size:22px;font-weight:800;letter-spacing:.3px;line-height:1.3;}
+  .wdphon{font-size:13.5px;color:#8b93a1;margin-top:2px;}
+  .snd{flex:none;width:32px;height:32px;border-radius:50%;border:1px solid #dfe4ec;background:#fff;color:#4b5563;font-size:15px;line-height:30px;text-align:center;}
+  .snd:active{background:#EFF5FF;}
+  .wdpos{display:inline-block;font-size:11.5px;color:#2f6bff;background:#EFF5FF;border-radius:5px;padding:0 5px;margin-right:5px;vertical-align:1px;}
+  .wddef{font-size:15px;line-height:1.7;margin-top:7px;}
+  .wdexa{font-size:13.5px;color:#6b7480;border-left:2px solid #dfe4ec;padding-left:9px;margin-top:7px;line-height:1.7;}
+  .wdbar{display:flex;align-items:center;gap:10px;margin-top:9px;font-size:12.5px;color:#9aa0a6;}
+  .wdpager{display:flex;gap:8px;margin-left:auto;}
+  .pgbtn{width:30px;height:28px;border-radius:9px;border:1px solid #dfe4ec;background:#fff;color:#4b5563;font-size:14px;}
+  .pgbtn[disabled]{opacity:.35;}
+  /* sentence 句子卡 */
+  .sn{font-size:16px;line-height:1.95;color:#39424e;}
+  .sn-l{padding:3px 8px;border-radius:8px;display:inline;transition:background .2s;}
+  .sn-l.on{background:#FFF6DE;}
+  .snbar{display:flex;gap:8px;align-items:center;margin-top:10px;font-size:12.5px;color:#9aa0a6;}
+  .snbtn{padding:5px 12px;border-radius:9px;border:1px solid #dfe4ec;background:#fff;color:#4b5563;font-size:12.5px;}
+  .snbtn.on{border-color:var(--brand);color:var(--brand);background:#EFF5FF;}
+  /* hanzi 汉字卡 */
+  .hz{display:flex;gap:12px;align-items:center;}
+  .hzbox{flex:none;width:62px;height:62px;border:1px solid #dfe4ec;border-radius:10px;background:#fff;font-size:42px;text-align:center;line-height:62px;font-family:"Kaiti SC",KaiTi,STKaiti,"Noto Serif CJK SC",serif;position:relative;overflow:hidden;}
+  .hzbox:before{content:'';position:absolute;left:0;top:0;right:0;bottom:0;pointer-events:none;
+    background-image:linear-gradient(#eef1f5 1px,transparent 1px),linear-gradient(90deg,#eef1f5 1px,transparent 1px);
+    background-size:100% 50%,50% 100%;}
+  .hzinfo{flex:1;min-width:0;font-size:14px;color:#5b6472;line-height:1.85;}
+  .hzinfo b{color:var(--ink);font-weight:700;}
+  /* lexical 字词 */
+  .lexw{font-size:19px;font-weight:800;}
+  .lexp{font-size:13.5px;color:#8b93a1;margin-left:8px;font-weight:400;}
+  .lexd{font-size:14.5px;line-height:1.72;margin-top:5px;}
+  /* poem 古诗文 */
+  .poem-h{text-align:center;}
+  .poem-t{font-size:17px;font-weight:800;letter-spacing:1px;}
+  .poem-s{font-size:12.5px;color:#9aa0a6;margin-top:2px;}
+  .poem-b{text-align:center;font-size:16.5px;line-height:2.1;letter-spacing:1.5px;margin:10px 0;font-family:"Kaiti SC",KaiTi,STKaiti,serif;}
+  .poem-n{font-size:13.5px;color:#6b7480;line-height:1.8;border-top:1px dashed var(--line);padding-top:8px;}
+  .poem-n b{color:#2f6bff;font-weight:700;}
+  /* letter 书信 */
+  .lthead{font-size:13px;color:#a08040;margin-bottom:6px;}
+  .ltbody{font-size:15px;line-height:1.78;}
+  .ltinput{width:100%;min-height:58px;border:1px solid #EADFC2;border-radius:11px;padding:9px 11px;font-size:14.5px;line-height:1.65;font-family:inherit;background:#fff;outline:none;resize:vertical;color:var(--ink);}
+  .ltinput:focus{border-color:#d9b96b;}
+  .ltrow{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:8px;}
+  .ltcnt{font-size:12px;color:#b9ad8c;margin-right:auto;}
+  .ltbtn{background:#C9A227;color:#fff;border:none;border-radius:11px;padding:8px 18px;font-size:14px;font-weight:600;}
+  .ltbtn[disabled]{opacity:.35;}
+  /* timeline 时间轴 */
+  .tl{position:relative;padding-left:19px;}
+  .tl:before{content:'';position:absolute;left:5px;top:7px;bottom:7px;width:2px;background:#e3e8f0;}
+  .tl-item{position:relative;margin:0 0 11px;}
+  .tl-item:last-child{margin-bottom:0;}
+  .tl-item:before{content:'';position:absolute;left:-17px;top:6px;width:9px;height:9px;border-radius:50%;background:#2f6bff;border:2px solid #fff;}
+  .tl-t{font-size:12.5px;font-weight:700;color:#2f6bff;letter-spacing:.2px;}
+  .tl-c{font-size:14.5px;line-height:1.7;color:#39424e;}
+  /* cycle 循环 */
+  .cyc{display:flex;flex-wrap:wrap;align-items:center;gap:6px;}
+  .cyc-n{background:#fff;border:1px solid #d8e2f5;border-radius:20px;padding:6px 12px;font-size:14px;color:#39424e;}
+  .cyc-a{color:#b9c6dc;font-size:13px;}
+  /* quizset 题组 */
+  .qshead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+  .qstitle{font-weight:800;font-size:15.5px;}
+  .qsprog{font-size:12.5px;color:#9aa0a6;}
+  .qsstem{font-size:15px;line-height:1.72;margin-bottom:4px;}
+  .qsopt{display:flex;gap:9px;align-items:flex-start;margin:7px 0;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#fff;font-size:14.5px;line-height:1.62;color:#39424e;}
+  .qsopt.sel{border-color:var(--brand);background:#F5F8FF;}
+  .qsopt.right{border-color:var(--ok);background:#EDF9F1;}
+  .qsopt.wrong{border-color:#e5484d;background:#FDEDED;}
+  .qskey{flex:none;font-weight:800;color:#2f6bff;}
+  .qsopt.right .qskey{color:var(--ok);}
+  .qsopt.wrong .qskey{color:#d33;}
+  .qsfb{margin-top:9px;border-radius:12px;padding:10px 12px;font-size:14px;line-height:1.7;}
+  .qsfb.ok{background:#EDF9F1;color:#215f3a;}
+  .qsfb.no{background:#FDEDED;color:#8a3b3b;}
+  .qsfb.mid{background:#F4F6F9;color:#4b5563;}
+  .qsfb .h{font-weight:800;margin-bottom:3px;}
+  .qsacts{display:flex;gap:8px;justify-content:flex-end;margin-top:10px;}
+  .qsbtn{background:var(--brand);color:#fff;border:none;border-radius:11px;padding:8px 20px;font-size:14px;font-weight:600;}
+  .qsbtn.ghost{background:#fff;border:1px solid #dfe4ec;color:#4b5563;font-weight:500;}
+  .qsbtn[disabled]{opacity:.35;}
+  /* wrong 错题存卡 */
+  .wr{border:1px dashed #cfd6e0;border-radius:14px;padding:12px 14px;background:#FCFDFF;}
+  .wr-h{font-size:14.5px;line-height:1.7;color:#4b5563;}
+  .wr-acts{display:flex;gap:8px;margin-top:10px;justify-content:flex-end;}
+  .wrbtn{background:#22406e;color:#fff;border:none;border-radius:11px;padding:8px 18px;font-size:14px;font-weight:600;}
+  .wrbtn.ghost{background:#fff;border:1px solid #dfe4ec;color:#6b7480;font-weight:500;}
+  /* flip 翻转卡 */
+  .flipw{display:flex;gap:8px;flex-wrap:wrap;}
+  .flipc{flex:1 1 44%;min-width:132px;min-height:86px;border:1px solid #d8e2f5;border-radius:14px;background:#fff;padding:11px 12px;font-size:14px;line-height:1.65;color:#39424e;position:relative;display:flex;flex-direction:column;justify-content:center;transition:background .2s,border-color .2s;}
+  .flipc .fh{font-size:11px;color:#b9c6dc;position:absolute;top:6px;right:9px;}
+  .flipc.on{background:#EFF5FF;border-color:#b9cdf0;}
+  /* quote 金句 */
+  .qt{background:#FFF8EA;border-radius:16px;padding:15px 18px 13px;font-size:15.5px;line-height:1.8;color:#6b5326;position:relative;}
+  .qt .qmark{font-size:26px;color:#E0B352;line-height:.6;display:block;margin-bottom:4px;font-family:Georgia,serif;}
+  .qt .qsrc{font-size:12.5px;color:#b09b6d;text-align:right;margin-top:7px;}
+</style>
+</head>
+<body>
+<div id="board"></div>
+<script>
+(function(){
+  'use strict';
+
+  var board = document.getElementById('board');
+  var nodes = [];
+  var sigs = [];
+  var talkEl = null;
+
+  var CN = ['零','一','二','三','四','五','六','七','八','九','十',
+            '十一','十二','十三','十四','十五','十六','十七','十八','十九','二十'];
+
+  function cnNum(n){
+    return (n >= 0 && n < CN.length) ? CN[n] : String(n);
+  }
+
+  /** 调用原生桥 */
+  function callJava(fn, arg){
+    try{
+      if (window.AndroidBridge && window.AndroidBridge[fn]){
+        window.AndroidBridge[fn](arg);
+      }
+    }catch(e){}
+  }
+
+  function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function unesc(s){ return String(s).replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&'); }
+
+  /** 文本 → HTML（公式居中放大、粗体、换行） */
+  function rich(text){
+    var html = esc(text);
+    html = html.replace(/\*\*([^*\n]+)\*\*/g,'<strong>$1</strong>');
+    html = html.replace(/\$\$([\s\S]+?)\$\$/g, function(_, tex){
+      try{ return '<div class="katex-display">'+katex.renderToString(unesc(tex),{displayMode:true,throwOnError:false})+'</div>'; }
+      catch(e){ return '<div class="katex-display">'+esc(tex)+'</div>'; }
+    });
+    html = html.replace(/\$([^\$\n]+?)\$/g, function(_, tex){
+      try{ return katex.renderToString(unesc(tex),{displayMode:false,throwOnError:false}); }
+      catch(e){ return '$'+esc(tex)+'$'; }
+    });
+    return html.replace(/\n/g,'<br>');
+  }
+
+  /* ================= 块渲染 ================= */
+
+  function stepTitle(b, idx){
+    var t = (b.title || '').trim();
+    if (!t){
+      return '<div class="stitle">第' + cnNum(idx) + '步</div>';
+    }
+    // 模型自己写了"第X步"或标题里已含"步"字，就原样用，避免"第一步：配方第一步"
+    if (/^第[一二三四五六七八九十0-9]+步/.test(t) || t.indexOf('步') >= 0){
+      return '<div class="stitle">' + rich(t) + '</div>';
+    }
+    return '<div class="stitle">第' + cnNum(idx) + '步：' + rich(t) + '</div>';
+  }
+
+  function nodeStep(b, idx){
+    var el = document.createElement('div');
+    el.className = 'blk';
+    el.innerHTML = stepTitle(b, idx)
+      + '<div class="card">' + rich(b.body || '') + '</div>';
+    return el;
+  }
+
+  function nodeNote(b, idx){
+    var el = document.createElement('div');
+    el.className = 'blk';
+    var lines = (b.body || '').split('\n');
+    var inner = '';
+    for (var i=0;i<lines.length;i++){
+      var ln = lines[i].trim();
+      if (!ln) continue;
+      if (ln.indexOf('→') === 0){
+        inner += '<div class="arrow">' + rich(ln) + '</div>';
+        continue;
+      }
+      var m = ln.match(/^([^：:]{1,10})[：:]\s*(.*)$/);
+      if (m && m[2].length > 0){
+        inner += '<div class="kv"><span class="k">' + esc(m[1]) + '：</span>'
+               + '<span class="v">' + rich(m[2]) + '</span></div>';
+      } else {
+        inner += '<p>' + rich(ln) + '</p>';
+      }
+    }
+    var head = (b.title && b.title.trim())
+      ? '<div class="stitle">' + rich(b.title) + '</div>' : '';
+    el.innerHTML = head + '<div class="card purple">' + inner + '</div>';
+    return el;
+  }
+
+  function nodeKey(b){
+    var el = document.createElement('div');
+    el.className = 'blk';
+    var body = (b.body && b.body.trim()) ? b.body : (b.title || '');
+    el.innerHTML = '<div class="card green okcard"><span class="tick">✓</span>'
+      + '<div>' + rich(body) + '</div></div>';
+    return el;
+  }
+
+  function nodeQuiz(b){
+    var lines = (b.body || '').split('\n');
+    var stem = [], opts = [], answer = '', exp = [];
+
+    for (var i=0;i<lines.length;i++){
+      var ln = lines[i].trim();
+      if (!ln) continue;
+      var am = ln.match(/^(?:答案|正确答案)[：:]\s*([A-Fa-f])/);
+      if (am){ answer = am[1].toUpperCase(); continue; }
+      var em = ln.match(/^(?:解析|分析)[：:]\s*(.*)$/);
+      if (em){ exp.push(em[1]); continue; }
+      var om = ln.match(/^([A-Fa-f])[.、)．]\s*(.+)$/);
+      if (om){ opts.push({lab: om[1].toUpperCase(), text: om[2]}); continue; }
+      stem.push(ln);
+    }
+
+    var blk = document.createElement('div');
+    blk.className = 'blk';
+
+    var title = (b.title && b.title.trim()) ? b.title : '当堂小测';
+    var head = document.createElement('div');
+    head.className = 'stitle';
+    head.innerHTML = rich(title);
+    blk.appendChild(head);
+
+    var card = document.createElement('div');
+    card.className = 'card white';
+
+    if (stem.length){
+      var p = document.createElement('p');
+      p.innerHTML = rich(stem.join('\n'));
+      card.appendChild(p);
+    }
+
+    for (var k=0;k<opts.length;k++){
+      var o = document.createElement('div');
+      o.className = 'opt';
+      o.setAttribute('data-lab', opts[k].lab);
+      o.innerHTML = '<span class="lab">' + opts[k].lab + '.</span><span>'
+        + rich(opts[k].text) + '</span>';
+      card.appendChild(o);
+    }
+
+    if (answer){
+      var a = document.createElement('div');
+      a.className = 'ans';
+      a.textContent = '答案：' + answer;
+      card.appendChild(a);
+    }
+    if (exp.length){
+      var e = document.createElement('div');
+      e.className = 'exp';
+      e.innerHTML = rich(exp.join('\n'));
+      card.appendChild(e);
+    }
+
+    if (opts.length){
+      card.addEventListener('click', function(ev){
+        if (card.classList.contains('quizdone')) return;
+        var t = ev.target;
+        while (t && t !== card && !t.classList.contains('opt')) t = t.parentNode;
+        if (!t || t === card) return;
+        card.classList.add('quizdone');
+        var all = card.querySelectorAll('.opt');
+        for (var j=0;j<all.length;j++){
+          if (all[j].getAttribute('data-lab') === answer) all[j].classList.add('right');
+          else if (all[j] === t) all[j].classList.add('wrong');
+        }
+        reportHeight();
+      });
+    }
+
+    // 自评：把"懂了/有点懵/完全不会"回传给原生，驱动下一步讲法
+    var evalRow = document.createElement('div');
+    evalRow.className = 'evalrow';
+    var LABELS = ['懂了', '有点懵', '完全不会'];
+    for (var e=0;e<LABELS.length;e++){
+      (function(label){
+        var btn = document.createElement('div');
+        btn.className = 'evalbtn';
+        btn.textContent = label;
+        btn.addEventListener('click', function(ev){
+          ev.stopPropagation();
+          var all = evalRow.querySelectorAll('.evalbtn');
+          for (var q=0;q<all.length;q++){
+            all[q].classList.remove('on');
+            all[q].classList.add('dim');
+          }
+          btn.classList.remove('dim');
+          btn.classList.add('on');
+          callJava('onQuizFeedback', label);
+        });
+        evalRow.appendChild(btn);
+      })(LABELS[e]);
+    }
+    card.appendChild(evalRow);
+
+    blk.appendChild(card);
+    return blk;
+  }
+
+  /** 开放题：学生自己写过程 */
+  function nodeAsk(b){
+    var el = document.createElement('div');
+    el.className = 'blk';
+
+    var head = document.createElement('div');
+    head.className = 'stitle';
+    head.innerHTML = '<span class="concept-tag">你来写</span>'
+      + rich((b.title || '').trim() || '把你的思路写下来');
+    el.appendChild(head);
+
+    var card = document.createElement('div');
+    card.className = 'card';
+
+    if (b.body && b.body.trim()){
+      var p = document.createElement('p');
+      p.innerHTML = rich(b.body);
+      card.appendChild(p);
+    }
+
+    var box = document.createElement('div');
+    box.className = 'askbox';
+    var ta = document.createElement('textarea');
+    ta.setAttribute('placeholder', '在这里写你的做法，写完点提交');
+    box.appendChild(ta);
+
+    var row = document.createElement('div');
+    row.className = 'subrow';
+    var hint = document.createElement('div');
+    hint.className = 'subhint';
+    hint.textContent = '不用写得很规范，我看得懂就行';
+    row.appendChild(hint);
+
+    var btn = document.createElement('button');
+    btn.className = 'askbtn';
+    btn.textContent = '提交';
+    btn.disabled = true;
+    row.appendChild(btn);
+    box.appendChild(row);
+    card.appendChild(box);
+
+    ta.addEventListener('input', function(){
+      btn.disabled = ta.value.trim().length === 0;
+    });
+    btn.addEventListener('click', function(){
+      var v = ta.value.trim();
+      if (!v) return;
+      btn.disabled = true;
+      btn.textContent = '已提交';
+      ta.setAttribute('readonly', 'readonly');
+      callJava('onAskSubmit', v);
+    });
+
+    el.appendChild(card);
+    return el;
+  }
+
+  /* ================= 新增卡片 ================= */
+
+  /** 概念卡：标题=概念名，正文按「键：值」排 */
+  function nodeConcept(b){
+    var el = document.createElement('div');
+    el.className = 'blk';
+    var lines = (b.body || '').split('\n');
+    var inner = '';
+    for (var i=0;i<lines.length;i++){
+      var ln = lines[i].trim();
+      if (!ln) continue;
+      var m = ln.match(/^([^：:]{1,10})[：:]\s*(.*)$/);
+      if (m && m[2].length > 0){
+        inner += '<div class="kv"><span class="k">' + esc(m[1]) + '：</span>'
+               + '<span class="v">' + rich(m[2]) + '</span></div>';
+      } else {
+        inner += '<div class="katex-display">' + rich(ln) + '</div>';
+      }
+    }
+    var tag = '<div class="stitle"><span class="concept-tag">概念</span>'
+      + rich((b.title || '').trim() || '知识点') + '</div>';
+    el.innerHTML = tag + '<div class="card blue">' + inner + '</div>';
+    return el;
+  }
+
+  /** 辨析比较：每行「左 | 右」 */
+  function nodeCompare(b){
+    var el = document.createElement('div');
+    el.className = 'blk';
+    var head = (b.title || '').trim() || '辨析比较';
+    var rows = '';
+    var lines = (b.body || '').split('\n');
+    var n = 0;
+    for (var i=0;i<lines.length;i++){
+      var ln = lines[i].trim();
+      if (!ln) continue;
+      var parts = ln.split(/\s*[|｜]\s*/);
+      if (parts.length < 2) continue;
+      n++;
+      rows += '<div class="cmp-row"><div class="l">' + rich(parts[0])
+            + '</div><div class="r">' + rich(parts.slice(1).join(' ')) + '</div></div>';
+    }
+    if (!n){
+      // 没按格式写，退化成普通卡
+      return nodeStep(b, 0);
+    }
+    el.innerHTML = '<div class="stitle"><span class="concept-tag">辨析</span>'
+      + rich(head) + '</div><div class="cmp">' + rows + '</div>';
+    return el;
+  }
+
+  /** 流程：用 → 或换行分节点 */
+  function nodeFlow(b){
+    var el = document.createElement('div');
+    el.className = 'blk';
+    var raw = (b.title ? b.title + '\n' : '') + (b.body || '');
+    var parts = raw.split(/\s*(?:→|->|=>|⇒|\n)\s*/);
+    var nodes = '';
+    var n = 0;
+    for (var i=0;i<parts.length;i++){
+      var t = parts[i].trim();
+      if (!t) continue;
+      if (n > 0) nodes += '<span class="arw">→</span>';
+      nodes += '<span class="node">' + rich(t) + '</span>';
+      n++;
+    }
+    if (!n) return nodeStep(b, 0);
+    el.innerHTML = '<div class="card"><div class="flow">' + nodes + '</div></div>';
+    return el;
+  }
+
+  /** 数据图表：line/bar + 轴名 + x,y 点 */
+  function nodeChart(b){
+    var el = document.createElement('div');
+    el.className = 'blk chart';
+    var cv = document.createElement('canvas');
+    el.appendChild(cv);
+
+    var lines = (b.body || '').split('\n');
+    var kind = 'line', xlab = 'x', ylab = 'y';
+    var pts = [];
+    var head = (b.title || '').trim();
+
+    for (var i=0;i<lines.length;i++){
+      var ln = lines[i].trim();
+      if (!ln) continue;
+      if (/^(line|bar|折线|柱状)/i.test(ln)){
+        kind = /bar|柱/i.test(ln) ? 'bar' : 'line';
+        continue;
+      }
+      var m = ln.match(/^([^,，]*)[,，]([^,，]*)$/);
+      if (m && !/^-?\d/.test(ln)){
+        xlab = m[1].trim(); ylab = m[2].trim();
+        continue;
+      }
+      var p = ln.match(/^(-?\d+(?:\.\d+)?)\s*[,，]\s*(-?\d+(?:\.\d+)?)$/);
+      if (p) pts.push([parseFloat(p[1]), parseFloat(p[2])]);
+    }
+
+    parentAppend(el);
+    setTimeout(function(){
+      try{ drawChart(cv, kind, pts, xlab, ylab); }
+      catch(e){ el.innerHTML = '<div class="cap" style="color:#e5484d">图表画不出来</div>'; }
+      scrollEnd();
+    }, 16);
+    if (head){
+      var cap = document.createElement('div');
+      cap.className = 'cap';
+      cap.textContent = head;
+      el.appendChild(cap);
+    }
+    return el;
+  }
+
+  function parentAppend(el){ /* 由调用方 append，占位保持签名一致 */ }
+
+  function drawChart(cv, kind, pts, xlab, ylab){
+    var W = Math.max(200, cv.parentNode.clientWidth - 2), H = 180;
+    if (!pts.length){ cv.parentNode.innerHTML = '<div class="cap">数据不足</div>'; return; }
+    draw(cv, W, H, function(ctx, w, h){
+      var PL = 34, PB = 20, PT = 12, PR = 10;
+      var xmin = Math.min.apply(null, pts.map(function(p){return p[0];}));
+      var xmax = Math.max.apply(null, pts.map(function(p){return p[0];}));
+      var ymin = Math.min.apply(null, pts.map(function(p){return p[1];}));
+      var ymax = Math.max.apply(null, pts.map(function(p){return p[1];}));
+      if (xmax === xmin){ xmax += 1; xmin -= 1; }
+      if (ymax === ymin){ ymax += 1; ymin -= 1; }
+      ymin = Math.min(0, ymin);
+      var iw = w - PL - PR, ih = h - PT - PB;
+      function px(x){ return PL + (x - xmin) / (xmax - xmin) * iw; }
+      function py(y){ return PT + ih - (y - ymin) / (ymax - ymin) * ih; }
+
+      // 轴
+      ctx.strokeStyle = '#d5dbe5'; ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(PL, PT); ctx.lineTo(PL, PT + ih); ctx.lineTo(PL + iw, PT + ih);
+      ctx.stroke();
+
+      ctx.fillStyle = '#9aa0a6'; ctx.font = '10px sans-serif';
+      ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      ctx.fillText(String(Math.round(ymax * 100) / 100), PL - 4, PT + 4);
+      ctx.fillText(String(Math.round(ymin * 100) / 100), PL - 4, PT + ih);
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillText(String(Math.round(xmin * 100) / 100), PL, PT + ih + 4);
+      ctx.fillText(String(Math.round(xmax * 100) / 100), PL + iw, PT + ih + 4);
+      ctx.fillText(xlab, PL + iw / 2, PT + ih + 4);
+      ctx.save();
+      ctx.translate(10, PT + ih / 2); ctx.rotate(-Math.PI / 2);
+      ctx.textAlign = 'center'; ctx.fillText(ylab, 0, 0);
+      ctx.restore();
+
+      var color = '#2f6bff';
+      if (kind === 'bar'){
+        var bw = Math.max(6, iw / pts.length * 0.55);
+        for (var i=0;i<pts.length;i++){
+          var x = px(pts[i][0]), y = py(pts[i][1]), y0 = py(Math.max(0, ymin));
+          ctx.fillStyle = color;
+          ctx.fillRect(x - bw / 2, Math.min(y, y0), bw, Math.abs(y0 - y) || 1);
+        }
+      } else {
+        ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.lineJoin = 'round';
+        ctx.beginPath();
+        for (var j=0;j<pts.length;j++){
+          var X = px(pts[j][0]), Y = py(pts[j][1]);
+          if (j === 0) ctx.moveTo(X, Y); else ctx.lineTo(X, Y);
+        }
+        ctx.stroke();
+        ctx.fillStyle = '#fff';
+        for (var k=0;k<pts.length;k++){
+          ctx.beginPath();
+          ctx.arc(px(pts[k][0]), py(pts[k][1]), 3, 0, Math.PI * 2);
+          ctx.fillStyle = '#fff'; ctx.fill();
+          ctx.strokeStyle = color; ctx.lineWidth = 1.8; ctx.stroke();
+        }
+      }
+    });
+  }
+
+  /** 公式块：居中大字 + 名字 */
+  function nodeFormula(b){
+    var el = document.createElement('div');
+    el.className = 'blk';
+    var name = (b.title || '').trim();
+    var body = (b.body || '').trim();
+    var nameHtml = name ? '<div class="fname">' + rich(name) + '</div>' : '';
+    el.innerHTML = '<div class="fbox">' + nameHtml + rich(body) + '</div>';
+    return el;
+  }
+
+  /* ================= 绘图 ================= */
+  function makeFn(expr){
+    var js = String(expr).toLowerCase().replace(/\s+/g,'').replace(/\^/g,'**')
+      .replace(/π/g,'PI').replace(/√/g,'sqrt').replace(/ln/g,'log')
+      .replace(/arcsin/g,'asin').replace(/arccos/g,'acos').replace(/arctan/g,'atan');
+    try{ var f = new Function('x','with(Math){return ('+js+');}'); f(1); return f; }
+    catch(e){ return null; }
+  }
+  function draw(cv,w,h,paint){
+    var dpr = window.devicePixelRatio || 1;
+    cv.width = Math.round(w*dpr); cv.height = Math.round(h*dpr);
+    cv.style.width = w+'px'; cv.style.height = h+'px';
+    var ctx = cv.getContext('2d'); ctx.scale(dpr,dpr);
+    ctx.clearRect(0,0,w,h); paint(ctx,w,h);
+  }
+  function niceStep(range,target){
+    var raw = range/target;
+    var p = Math.pow(10, Math.floor(Math.log(raw)/Math.LN10));
+    var n = raw/p;
+    return (n<1.5?1:(n<3?2:(n<7?5:10)))*p;
+  }
+  function plotFunc(cv,spec){
+    var f = makeFn(spec.expr);
+    var W = Math.max(200, cv.parentNode.clientWidth - 2), H = 190;
+    if (!f){ cv.parentNode.innerHTML = '<div class="cap" style="color:#e5484d">表达式无法解析：'+esc(spec.expr)+'</div>'; return; }
+    var xmin = isFinite(spec.xmin)?spec.xmin:-6, xmax = isFinite(spec.xmax)?spec.xmax:6;
+    if (xmax-xmin < 0.5){ xmin-=3; xmax+=3; }
+    var N=480, pts=[], ymin=Infinity, ymax=-Infinity;
+    for (var i=0;i<=N;i++){
+      var x = xmin + (xmax-xmin)*i/N, y = f(x);
+      if (typeof y!=='number' || !isFinite(y)){ pts.push(null); continue; }
+      pts.push([x,y]);
+      if (y<ymin) ymin=y;
+      if (y>ymax) ymax=y;
+    }
+    if (!isFinite(ymin)){ ymin=-1; ymax=1; }
+    var pad = (ymax-ymin)*0.12 || 1; ymin-=pad; ymax+=pad;
+    if (ymax-ymin < 1){ var c0=(ymax+ymin)/2; ymin=c0-0.5; ymax=c0+0.5; }
+    draw(cv,W,H,function(ctx,w,h){
+      var sx=w/(xmax-xmin), sy=h/(ymax-ymin);
+      function px(x){ return (x-xmin)*sx; }
+      function py(y){ return h-(y-ymin)*sy; }
+      var gx=niceStep(xmax-xmin,6), gy=niceStep(ymax-ymin,4);
+      ctx.strokeStyle='#eef1f5'; ctx.lineWidth=1;
+      for (var a=Math.ceil(xmin/gx)*gx; a<=xmax; a+=gx){ ctx.beginPath(); ctx.moveTo(px(a),0); ctx.lineTo(px(a),h); ctx.stroke(); }
+      for (var b2=Math.ceil(ymin/gy)*gy; b2<=ymax; b2+=gy){ ctx.beginPath(); ctx.moveTo(0,py(b2)); ctx.lineTo(w,py(b2)); ctx.stroke(); }
+      ctx.strokeStyle='#c9ced6'; ctx.lineWidth=1.2;
+      if (ymin<0&&ymax>0){ ctx.beginPath(); ctx.moveTo(0,py(0)); ctx.lineTo(w,py(0)); ctx.stroke(); }
+      if (xmin<0&&xmax>0){ ctx.beginPath(); ctx.moveTo(px(0),0); ctx.lineTo(px(0),h); ctx.stroke(); }
+      ctx.fillStyle='#9aa0a6'; ctx.font='10px sans-serif';
+      ctx.textAlign='center'; ctx.textBaseline='top';
+      for (var tx=Math.ceil(xmin/gx)*gx; tx<=xmax; tx+=gx){
+        if (Math.abs(tx)<1e-9) continue;
+        ctx.fillText(String(Math.round(tx*1000)/1000), px(tx), (ymin<0&&ymax>0?py(0):h-12)+3);
+      }
+      ctx.textAlign='right'; ctx.textBaseline='middle';
+      for (var ty=Math.ceil(ymin/gy)*gy; ty<=ymax; ty+=gy){
+        if (Math.abs(ty)<1e-9) continue;
+        ctx.fillText(String(Math.round(ty*1000)/1000), (xmin<0&&xmax>0?px(0):w-2)-4, py(ty));
+      }
+      ctx.strokeStyle='#2f6bff'; ctx.lineWidth=2.2; ctx.lineJoin='round'; ctx.lineCap='round';
+      ctx.beginPath();
+      var started=false;
+      for (var k=0;k<pts.length;k++){
+        var p=pts[k];
+        if (!p){ started=false; continue; }
+        var X=px(p[0]), Y=py(p[1]);
+        if (Y<-h*2 || Y>h*3){ started=false; continue; }
+        if (!started){ ctx.moveTo(X,Y); started=true; } else ctx.lineTo(X,Y);
+      }
+      ctx.stroke();
+    });
+  }
+  function plotGeo(cv,spec){
+    var W = Math.max(200, cv.parentNode.clientWidth - 2), H = 210;
+    var pts = spec.points||{}, keys = Object.keys(pts);
+    if (!keys.length) return;
+    var xs=[], ys=[];
+    keys.forEach(function(k){ xs.push(pts[k][0]); ys.push(pts[k][1]); });
+    var xmin=Math.min.apply(null,xs), xmax=Math.max.apply(null,xs);
+    var ymin=Math.min.apply(null,ys), ymax=Math.max.apply(null,ys);
+    var padx=(xmax-xmin)*0.35||1, pady=(ymax-ymin)*0.35||1;
+    xmin-=padx; xmax+=padx; ymin-=pady; ymax+=pady;
+    var scale = Math.min(W/(xmax-xmin), H/(ymax-ymin));
+    var cx=(xmin+xmax)/2, cy=(ymin+ymax)/2;
+    draw(cv,W,H,function(ctx,w,h){
+      function px(x){ return w/2 + (x-cx)*scale; }
+      function py(y){ return h/2 - (y-cy)*scale; }
+      ctx.strokeStyle='#2f6bff'; ctx.lineWidth=2;
+      (spec.segments||[]).forEach(function(sg){
+        if (!pts[sg[0]]||!pts[sg[1]]) return;
+        ctx.beginPath(); ctx.moveTo(px(pts[sg[0]][0]),py(pts[sg[0]][1]));
+        ctx.lineTo(px(pts[sg[1]][0]),py(pts[sg[1]][1])); ctx.stroke();
+      });
+      (spec.circles||[]).forEach(function(c){
+        if (!pts[c.center]) return;
+        ctx.beginPath(); ctx.arc(px(pts[c.center][0]),py(pts[c.center][1]),c.r*scale,0,Math.PI*2);
+        ctx.setLineDash([4,3]); ctx.stroke(); ctx.setLineDash([]);
+      });
+      keys.forEach(function(k){
+        var X=px(pts[k][0]), Y=py(pts[k][1]);
+        ctx.beginPath(); ctx.arc(X,Y,3.6,0,Math.PI*2);
+        ctx.fillStyle='#fff'; ctx.fill();
+        ctx.strokeStyle='#2f6bff'; ctx.lineWidth=2; ctx.stroke();
+        ctx.fillStyle='#12151a'; ctx.font='bold 12px sans-serif';
+        ctx.textAlign='left'; ctx.textBaseline='bottom';
+        ctx.fillText(k, X+5, Y-4);
+      });
+    });
+  }
+  function nodePlotIn(parent, b){
+    var el = document.createElement('div');
+    el.className = 'blk plot';
+    var cv = document.createElement('canvas');
+    el.appendChild(cv);
+    parent.appendChild(el);
+    setTimeout(function(){
+      try{
+        if (b.kind === 'func') plotFunc(cv, b.spec);
+        else plotGeo(cv, b.spec);
+      }catch(e){
+        el.innerHTML = '<div class="cap" style="color:#e5484d">图形渲染失败：'+esc(e.message||e)+'</div>';
+      }
+      scrollEnd();
+      reportHeight();
+    }, 16);
+    return el;
+  }
+
+  /* ================= 讲稿 ================= */
+  function renderTalk(parent, text, inTurn){
+    // 每一轮各自一份讲稿：按容器缓存
+    var key = inTurn ? '__turnTalk' : '__pageTalk';
+    var talkEl = parent[key] || null;
+    if (!talkEl){
+      talkEl = document.createElement('div');
+      talkEl.className = 'talk';
+      talkEl.innerHTML = '<div class="talk-b"></div><div class="talk-h"></div>';
+      talkEl.querySelector('.talk-h').addEventListener('click', function(){
+        talkEl.classList.toggle('open');
+        talkEl.querySelector('.talk-h').textContent =
+          talkEl.classList.contains('open') ? '收起' : '展开全文';
+        reportHeight();
+      });
+      parent.appendChild(talkEl);
+      parent[key] = talkEl;
+    }
+    talkEl.querySelector('.talk-b').innerHTML = rich(text);
+    // 行数超过 2 才显示"展开全文"
+    var b = talkEl.querySelector('.talk-b');
+    var over = b.scrollHeight > b.clientHeight + 4;
+    if (!talkEl.classList.contains('open')){
+      talkEl.querySelector('.talk-h').textContent = over ? '展开全文' : '';
+    }
+    reportHeight();
+  }
+
+  function footNode(){
+    var d = document.createElement('div');
+    d.className = 'foot';
+    d.textContent = '内容由 AI 生成，请自行核对';
+    return d;
+  }
+
+  /* ================= 高度回报 ================= */
+  // 画布高度由原生固定（占屏幕大部分），这里不再回报，避免"每发一条就长一格"
+  function reportHeight(){}
+
+  function scrollEnd(){
+    // 画布固定高度，内容在 WebView 内部滚动
+    setTimeout(function(){
+      var d = document.scrollingElement || document.documentElement;
+      if (d) window.scrollTo(0, d.scrollHeight);
+    }, 0);
+  }
+
+  /* ================= 对外 ================= */
+  function sig(b){
+    if (b.type === 'plot') return 'P:'+b.raw;
+    return b.type+':'+(b.no||'')+'|'+(b.title||'')+'|'+(b.body||'');
+  }
+
+  var turnEl = null;          // 当前这一轮 AI 回复的容器
+  var turnNodes = [];
+  var turnSigs = [];
+
+    /* ================= v3 新增卡片 ================= */
+  function splitBar(s){ return String(s == null ? '' : s).split(/\s*[|｜]\s*/); }
+  function lines(b){
+    return String(b.body || '').split('\n').map(function(s){ return s.trim(); })
+      .filter(function(s){ return s.length > 0; });
+  }
+  function withTitle(b, html){
+    var h = '';
+    if (b.title) h += '<div class="cardtitle">' + rich(b.title) + '</div>';
+    return h + html;
+  }
+  /** 朗读：slow=1 时语速放慢 */
+  function speak(text, slow){
+    callJava('onSpeak', String(text || '').replace(/\|/g, '') + '|' + (slow ? '1' : '0'));
+  }
+
+  /* ---------- 讲解全貌：先给地图 ---------- */
+  function nodeOverview(b){
+    var el = document.createElement('div');
+    el.className = 'blk';
+    var rows = lines(b), h = '<div class="ovlist">';
+    for (var i = 0; i < rows.length; i++){
+      var p = splitBar(rows[i]);
+      h += '<div class="ovitem"><div class="ovnum">' + (i + 1) + '</div>'
+         + '<div style="flex:1;min-width:0"><div class="ovt">' + rich(p[0]) + '</div>'
+         + (p[1] ? '<div class="ovd">' + rich(p[1]) + '</div>' : '') + '</div></div>';
+    }
+    h += '</div>';
+    el.innerHTML = withTitle(b, h);
+    return el;
+  }
+
+  /* ---------- 知识辨识：误区 ✕ / 真相 ✓ ---------- */
+  function nodeMistake(b){
+    var el = document.createElement('div');
+    el.className = 'blk';
+    var rows = lines(b), h = '';
+    for (var i = 0; i < rows.length; i++){
+      var r = rows[i], bad = '', good = r, k = r.indexOf('=>');
+      if (k > 0){ bad = r.slice(0, k); good = r.slice(k + 2); }
+      else {
+        var p = splitBar(r);
+        if (p.length > 1){ bad = p[0]; good = p.slice(1).join('｜'); }
+      }
+      bad = bad.replace(/^\s*(误区|错误|易错|错解)\s*[:：]?\s*/, '');
+      good = good.replace(/^\s*(真相|正确|正解|其实)\s*[:：]?\s*/, '');
+      if (bad) h += '<div class="mkline bad"><span class="mkic">✕</span><span>' + rich(bad) + '</span></div>';
+      if (good) h += '<div class="mkline good"><span class="mkic">✓</span><span>' + rich(good) + '</span></div>';
+    }
+    el.innerHTML = withTitle(b, h);
+    return el;
+  }
+
+  /* ---------- 利弊分析：左绿右红 ---------- */
+  function nodeProsCons(b){
+    var el = document.createElement('div');
+    el.className = 'blk';
+    var rows = lines(b), P = [], C = [];
+    for (var i = 0; i < rows.length; i++){
+      var r = rows[i], m = r.match(/^([+\-＋－])\s*(.*)$/);
+      if (m){ (m[1] === '+' || m[1] === '＋') ? P.push(m[2]) : C.push(m[2]); }
+      else {
+        var p = splitBar(r);
+        if (p.length > 1){ P.push(p[0]); if (p[1]) C.push(p[1]); }
+        else P.push(r);
+      }
+    }
+    function col(list, cls, name){
+      if (!list.length) return '';
+      var s = '<div class="pc-col ' + cls + '"><div class="pc-h">' + name + '</div>';
+      for (var j = 0; j < list.length; j++) s += '<div class="pc-li">' + rich(list[j]) + '</div>';
+      return s + '</div>';
+    }
+    var h = '<div class="pc">' + col(P, 'p', '优势') + col(C, 'c', '劣势') + '</div>';
+    el.innerHTML = withTitle(b, h);
+    return el;
+  }
+
+  /* ---------- 因果关系：竖向链条 ---------- */
+  function nodeCause(b){
+    var el = document.createElement('div');
+    el.className = 'blk';
+    var rows = lines(b), h = '';
+    for (var i = 0; i < rows.length; i++){
+      if (i > 0) h += '<div class="czarrow">↓</div>';
+      h += '<div class="czn' + (i === 0 ? ' first' : '') + '">' + rich(rows[i]) + '</div>';
+    }
+    el.innerHTML = withTitle(b, h);
+    return el;
+  }
+
+  /* ---------- 表格：首行表头 ---------- */
+  function nodeTable(b){
+    var el = document.createElement('div');
+    el.className = 'blk';
+    var rows = lines(b);
+    if (rows.length < 1) return nodeStep(b, 0);
+    var head = splitBar(rows[0]);
+    var h = '<div class="tbwrap"><table class="tb"><thead><tr>';
+    for (var i = 0; i < head.length; i++) h += '<th>' + rich(head[i]) + '</th>';
+    h += '</tr></thead><tbody>';
+    for (var r = 1; r < rows.length; r++){
+      var cs = splitBar(rows[r]);
+      h += '<tr>';
+      for (var j = 0; j < head.length; j++) h += '<td>' + (cs[j] !== undefined ? rich(cs[j]) : '') + '</td>';
+      h += '</tr>';
+    }
+    h += '</tbody></table></div>';
+    el.innerHTML = withTitle(b, h);
+    return el;
+  }
+
+  /* ---------- 层级结构：按行首缩进 ---------- */
+  function nodeTree(b){
+    var el = document.createElement('div');
+    el.className = 'blk';
+    var raw = String(b.body || '').split('\n');
+    var h = '<div class="tree">';
+    for (var i = 0; i < raw.length; i++){
+      var line = raw[i];
+      if (!line.trim()) continue;
+      var ind = line.match(/^[ \t]*/)[0].length;
+      var t = line.trim().replace(/^[-*•·]\s*/, '');
+      var p = splitBar(t);
+      h += '<div class="tr-row" style="padding-left:' + (ind * 9) + 'px">'
+         + '<span class="tr-dot">·</span><span class="tr-name">' + rich(p[0]) + '</span>'
+         + (p[1] ? '<span class="tr-desc">' + rich(p[1]) + '</span>' : '') + '</div>';
+    }
+    h += '</div>';
+    el.innerHTML = withTitle(b, h);
+    return el;
+  }
+
+  /* ---------- 步骤指引：深蓝编号块 ---------- */
+  function nodeSteps(b){
+    var el = document.createElement('div');
+    el.className = 'blk';
+    var rows = lines(b), h = '';
+    for (var i = 0; i < rows.length; i++){
+      var p = splitBar(rows[i]);
+      var head = p[0].replace(/^\s*[0-9]+[.、．)）]?\s*/, '');
+      h += '<div class="stp"><div class="stpn">' + (i + 1) + '</div>'
+         + '<div class="stpt"><div class="stph">' + rich(head) + '</div>'
+         + (p[1] ? '<div class="stpd">' + rich(p[1]) + '</div>' : '') + '</div></div>';
+    }
+    el.innerHTML = withTitle(b, h);
+    return el;
+  }
+
+  /* ---------- 饼图 / 环形图（纯 CSS，不依赖 canvas） ---------- */
+  function nodePie(b, donut){
+    var el = document.createElement('div');
+    el.className = 'blk';
+    var rows = lines(b), data = [], total = 0;
+    for (var i = 0; i < rows.length; i++){
+      if (/^(pie|donut|环形图?|饼图)$/i.test(rows[i])) continue;
+      var p = rows[i].split(/\s*[,，|｜]\s*/);
+      if (p.length >= 2){
+        var v = parseFloat(p[1]);
+        if (!isNaN(v) && v > 0){ data.push([p[0], v]); total += v; }
+      }
+    }
+    if (!data.length || total <= 0) return nodeStep(b, 0);
+    var colors = ['#4C8DFF','#FFB84C','#5AC8A8','#B78CFF','#FF7A7A','#7FB3D5','#F0A0D0','#9DBF6E'];
+    var cur = 0, segs = [];
+    for (var k = 0; k < data.length; k++){
+      var a1 = cur / total * 360;
+      cur += data[k][1];
+      var a2 = cur / total * 360;
+      segs.push(colors[k % colors.length] + ' ' + a1.toFixed(2) + 'deg ' + a2.toFixed(2) + 'deg');
+    }
+    var bg = 'conic-gradient(' + segs.join(',') + ')';
+    if (donut) bg = 'radial-gradient(circle, #ffffff 0 27%, rgba(255,255,255,0) 27.6%), ' + bg;
+    var h = '<div style="display:flex;gap:14px;align-items:center">';
+    h += '<div style="flex:none;width:110px;height:110px;border-radius:50%;background:' + bg + '"></div>';
+    h += '<div style="flex:1;min-width:0;font-size:13.5px;line-height:1.95">';
+    for (var j = 0; j < data.length; j++){
+      h += '<div><span style="display:inline-block;width:9px;height:9px;border-radius:3px;background:'
+         + colors[j % colors.length] + ';margin-right:6px"></span>' + esc(data[j][0])
+         + ' <b>' + (data[j][1] / total * 100).toFixed(1) + '%</b></div>';
+    }
+    h += '</div></div>';
+    el.innerHTML = withTitle(b, h);
+    return el;
+  }
+
+  /* ---------- 单词卡：一词一屏 + 发音 + 翻页 ---------- */
+  function nodeWord(b){
+    var el = document.createElement('div');
+    el.className = 'blk';
+    var list = [];
+    var rows = lines(b);
+    for (var i = 0; i < rows.length; i++){
+      var p = splitBar(rows[i]);
+      if (p[0]) list.push(p);
+    }
+    if (!list.length) return nodeStep(b, 0);
+    var idx = 0;
+    function paint(){
+      var p = list[idx];
+      var word = p[0] || '', phon = p[1] || '', def = p[2] || '', exa = p[3] || '';
+      var h = '';
+      if (b.title) h += '<div class="cardtitle">' + rich(b.title) + '</div>';
+      h += '<div class="wdtop"><div style="flex:1;min-width:0">'
+         + '<div class="wdword">' + esc(word) + '</div>'
+         + (phon ? '<div class="wdphon">' + esc(phon) + '</div>' : '') + '</div>'
+         + '<div class="snd" data-say="' + esc(word) + '">🔊</div></div>';
+      if (def) h += '<div class="wddef">' + rich(def) + '</div>';
+      if (exa) h += '<div class="wdexa">' + rich(exa) + '</div>';
+      if (list.length > 1){
+        h += '<div class="wdbar"><span>' + (idx + 1) + ' / ' + list.length + '</span>'
+           + '<div class="wdpager">'
+           + '<button class="pgbtn" data-p="-1"' + (idx === 0 ? ' disabled' : '') + '>‹</button>'
+           + '<button class="pgbtn" data-p="1"' + (idx >= list.length - 1 ? ' disabled' : '') + '>›</button>'
+           + '</div></div>';
+      }
+      el.innerHTML = h;
+      var s = el.querySelector('[data-say]');
+      if (s) s.onclick = function(){ speak(s.getAttribute('data-say'), false); };
+      var bs = el.querySelectorAll('[data-p]');
+      for (var k = 0; k < bs.length; k++){
+        (function(btn){
+          btn.onclick = function(){
+            idx += parseInt(btn.getAttribute('data-p'), 10);
+            if (idx < 0) idx = 0;
+            if (idx > list.length - 1) idx = list.length - 1;
+            paint();
+          };
+        })(bs[k]);
+      }
+    }
+    paint();
+    return el;
+  }
+
+  /* ---------- 句子卡：逐句朗读 + 连播 + 语速 ---------- */
+  function nodeSentence(b){
+    var el = document.createElement('div');
+    el.className = 'blk';
+    var arr = lines(b);
+    if (!arr.length) return nodeStep(b, 0);
+    var idx = -1, auto = false, slow = false, timer = null;
+    function stopTimer(){ if (timer){ clearTimeout(timer); timer = null; } }
+    function paint(){
+      var h = '';
+      if (b.title) h += '<div class="cardtitle">' + rich(b.title) + '</div>';
+      h += '<div class="sn">';
+      for (var i = 0; i < arr.length; i++){
+        h += '<span class="sn-l' + (i === idx ? ' on' : '') + '" data-i="' + i + '">' + rich(arr[i]) + '</span>';
+      }
+      h += '</div><div class="snbar">'
+         + '<button class="snbtn' + (auto ? ' on' : '') + '" data-a="1">' + (auto ? '停止连播' : '连续播放') + '</button>'
+         + '<button class="snbtn' + (slow ? ' on' : '') + '" data-s="1">' + (slow ? '慢速' : '正常语速') + '</button>'
+         + '<span style="margin-left:auto">点句子可单读</span></div>';
+      el.innerHTML = h;
+      var spans = el.querySelectorAll('.sn-l');
+      for (var k = 0; k < spans.length; k++){
+        (function(sp){
+          sp.onclick = function(){
+            stopTimer(); auto = false;
+            idx = parseInt(sp.getAttribute('data-i'), 10);
+            paint();
+            speak(arr[idx], slow);
+          };
+        })(spans[k]);
+      }
+      el.querySelector('[data-a]').onclick = function(){
+        auto = !auto;
+        stopTimer();
+        if (auto){ if (idx < 0) idx = 0; speak(arr[idx], slow); paint(); tick(); }
+        else paint();
+      };
+      el.querySelector('[data-s]').onclick = function(){ slow = !slow; paint(); };
+    }
+    function tick(){
+      stopTimer();
+      if (!auto) return;
+      var cur = arr[idx] || '';
+      timer = setTimeout(function(){
+        if (!auto) return;
+        if (idx >= arr.length - 1){ auto = false; paint(); return; }
+        idx++;
+        speak(arr[idx], slow);
+        paint();
+        tick();
+      }, cur.length * (slow ? 430 : 290) + 900);
+    }
+    paint();
+    return el;
+  }
+
+  /* ---------- 汉字卡：田字格 + 属性 ---------- */
+  function nodeHanzi(b){
+    var el = document.createElement('div');
+    el.className = 'blk';
+    var rows = lines(b), h = '', labels = ['拼音','部首','笔画','结构','组词'];
+    for (var i = 0; i < rows.length; i++){
+      var p = splitBar(rows[i]);
+      var info = '';
+      for (var j = 1; j < p.length; j++){
+        if (p[j]) info += '<div><b>' + (labels[j - 1] || '') + '</b> ' + rich(p[j]) + '</div>';
+      }
+      h += '<div class="hz" style="margin-bottom:10px"><div class="hzbox">' + esc(p[0] || '') + '</div>'
+         + '<div class="hzinfo">' + info + '</div></div>';
+    }
+    el.innerHTML = withTitle(b, h);
+    return el;
+  }
+
+  /* ---------- 字词卡：读音 / 释义 / 多音字 ---------- */
+  function nodeLexical(b){
+    var el = document.createElement('div');
+    el.className = 'blk';
+    var rows = lines(b), h = '';
+    for (var i = 0; i < rows.length; i++){
+      var p = splitBar(rows[i]);
+      h += '<div style="margin-bottom:10px">'
+         + '<div><span class="lexw">' + esc(p[0] || '') + '</span>'
+         + (p[1] ? '<span class="lexp">' + esc(p[1]) + '</span>' : '') + '</div>'
+         + (p.length > 2 ? '<div class="lexd">' + rich(p.slice(2).join('｜')) + '</div>' : '')
+         + '</div>';
+    }
+    el.innerHTML = withTitle(b, h);
+    return el;
+  }
+
+  /* ---------- 书信卡：学生写一句话，寄出去 ---------- */
+  function nodeLetter(b){
+    var el = document.createElement('div');
+    el.className = 'blk';
+    var MAX = 50, sent = false;
+    var h = '<div style="background:#FFFDF5;border:1px solid #F0E6C8;border-radius:16px;padding:13px 14px">';
+    if (b.title) h += '<div class="lthead">— ' + rich(b.title) + '</div>';
+    if (b.body) h += '<div class="ltbody">' + rich(b.body) + '</div>';
+    h += '<div style="margin-top:11px">'
+       + '<textarea class="ltinput" maxlength="' + MAX + '" placeholder="写下你想说的话…"></textarea>'
+       + '<div class="ltrow"><span class="ltcnt">0/' + MAX + '</span>'
+       + '<button class="ltbtn" disabled>寄出</button></div></div></div>';
+    el.innerHTML = h;
+    var ta = el.querySelector('.ltinput');
+    var btn = el.querySelector('.ltbtn');
+    var cnt = el.querySelector('.ltcnt');
+    ta.oninput = function(){
+      cnt.textContent = ta.value.length + '/' + MAX;
+      btn.disabled = ta.value.trim().length === 0;
+    };
+    btn.onclick = function(){
+      if (sent) return;
+      var v = ta.value.trim();
+      if (!v) return;
+      sent = true;
+      btn.disabled = true;
+      ta.disabled = true;
+      btn.textContent = '已寄出';
+      callJava('onAskSubmit', '我写了这样一封信：' + v);
+    };
+    return el;
+  }
+
+  /* ---------- 古诗文卡：原文居中 + 注释/手法/情感 ---------- */
+  function nodePoem(b){
+    var el = document.createElement('div');
+    el.className = 'blk';
+    var raw = String(b.body || '').split('\n');
+    var title = b.title || '', author = '', body = [], notes = [], tech = '', emo = '';
+    for (var i = 0; i < raw.length; i++){
+      var r = raw[i].trim();
+      if (!r) continue;
+      if (/^(作者|出处)[:：]/.test(r)) author = r.replace(/^(作者|出处)[:：]\s*/, '');
+      else if (/^(注|注释)[:：]/.test(r)) notes.push(r.replace(/^(注|注释)[:：]\s*/, ''));
+      else if (/^(手法|写法)[:：]/.test(r)) tech = r.replace(/^(手法|写法)[:：]\s*/, '');
+      else if (/^(情感|主旨|主题)[:：]/.test(r)) emo = r.replace(/^(情感|主旨|主题)[:：]\s*/, '');
+      else if (/^(题|标题)[:：]/.test(r)) title = r.replace(/^(题|标题)[:：]\s*/, '');
+      else body.push(r);
+    }
+    var h = '<div class="poem-h"><div class="poem-t">' + rich(title) + '</div>'
+          + (author ? '<div class="poem-s">' + rich(author) + '</div>' : '') + '</div>';
+    var bs = [];
+    for (var j = 0; j < body.length; j++) bs.push(rich(body[j]));
+    h += '<div class="poem-b">' + bs.join('<br>') + '</div>';
+    var n = '';
+    if (notes.length){
+      var ns = [];
+      for (var k = 0; k < notes.length; k++) ns.push(rich(notes[k]));
+      n += '<div><b>注释</b> ' + ns.join('；') + '</div>';
+    }
+    if (tech) n += '<div><b>手法</b> ' + rich(tech) + '</div>';
+    if (emo) n += '<div><b>情感</b> ' + rich(emo) + '</div>';
+    if (n) h += '<div class="poem-n">' + n + '</div>';
+    el.innerHTML = h;
+    return el;
+  }
+
+  /* ---------- 时间轴 ---------- */
+  function nodeTimeline(b){
+    var el = document.createElement('div');
+    el.className = 'blk';
+    var rows = lines(b), h = '<div class="tl">';
+    for (var i = 0; i < rows.length; i++){
+      var p = splitBar(rows[i]);
+      h += '<div class="tl-item"><div class="tl-t">' + esc(p[0]) + '</div>'
+         + '<div class="tl-c">' + rich(p.slice(1).join('｜')) + '</div></div>';
+    }
+    h += '</div>';
+    el.innerHTML = withTitle(b, h);
+    return el;
+  }
+
+  /* ---------- 循环 / 周期 ---------- */
+  function nodeCycle(b){
+    var el = document.createElement('div');
+    el.className = 'blk';
+    var rows = lines(b), h = '<div class="cyc">';
+    for (var i = 0; i < rows.length; i++){
+      if (i > 0) h += '<span class="cyc-a">→</span>';
+      h += '<span class="cyc-n">' + rich(rows[i]) + '</span>';
+    }
+    if (rows.length > 1){
+      h += '<span class="cyc-a">→</span><span class="cyc-n" style="border-style:dashed;color:#9aa0a6">回到起点</span>';
+    }
+    h += '</div>';
+    el.innerHTML = withTitle(b, h);
+    return el;
+  }
+
+  /* ---------- 题组：多题 + 提交 + 解析 + 下一题 ---------- */
+  function nodeQuizSet(b){
+    var el = document.createElement('div');
+    el.className = 'blk';
+    var raw = String(b.body || '').split('\n');
+    var qs = [], cur = null;
+    for (var i = 0; i < raw.length; i++){
+      var r = raw[i].trim();
+      if (!r || /^-{3,}$/.test(r)) continue;
+      if (/^(Q|题|问)\s*[:：]/.test(r)){
+        if (cur) qs.push(cur);
+        cur = { stem: r.replace(/^(Q|题|问)\s*[:：]\s*/, ''), opts: [], ans: '', exp: '', kp: '' };
+        continue;
+      }
+      if (!cur) continue;
+      if (/^[A-Da-d]\s*[.、．)）]/.test(r)) cur.opts.push(r);
+      else if (/^答案/.test(r)) cur.ans = r.replace(/^答案\s*[:：]\s*/, '');
+      else if (/^解析/.test(r)) cur.exp = r.replace(/^解析\s*[:：]\s*/, '');
+      else if (/^(知识点|考点)/.test(r)) cur.kp = r.replace(/^(知识点|考点)\s*[:：]\s*/, '');
+      else if (cur.opts.length === 0 && !cur.ans) cur.stem += r;
+    }
+    if (cur) qs.push(cur);
+    if (!qs.length) return nodeStep(b, 0);
+    var idx = 0, state = [];
+    for (var s = 0; s < qs.length; s++) state.push({ sel: '', done: false });
+
+    function paint(){
+      var q = qs[idx], st = state[idx];
+      var ansKey = String(q.ans || '').toUpperCase().replace(/[^A-D]/g, '').charAt(0);
+      var h = '<div class="qshead"><span class="qstitle">' + esc(b.title || '随堂练习') + '</span>'
+            + '<span class="qsprog">' + (idx + 1) + '/' + qs.length + '</span></div>';
+      h += '<div class="qsstem">' + rich(q.stem) + '</div>';
+      for (var i = 0; i < q.opts.length; i++){
+        var key = String.fromCharCode(65 + i);
+        var txt = q.opts[i].replace(/^[A-Da-d]\s*[.、．)）]\s*/, '');
+        var cls = 'qsopt';
+        if (!st.done && st.sel === key) cls += ' sel';
+        if (st.done){
+          if (ansKey && key === ansKey) cls += ' right';
+          else if (st.sel === key) cls += ' wrong';
+        }
+        h += '<div class="' + cls + '" data-k="' + key + '"><span class="qskey">' + key + '</span>'
+           + '<span style="flex:1;min-width:0">' + rich(txt) + '</span></div>';
+      }
+      if (st.done){
+        var ok = ansKey && st.sel === ansKey;
+        h += '<div class="qsfb ' + (ok ? 'ok' : 'no') + '"><div class="h">'
+           + (ok ? '回答正确' : (q.ans ? '正确答案：' + esc(q.ans) : '参考答案'))
+           + '</div>' + (q.exp ? rich(q.exp) : '')
+           + (q.kp ? '<div style="margin-top:4px;font-size:13px;opacity:.85">知识点：' + rich(q.kp) + '</div>' : '')
+           + '</div>';
+      }
+      h += '<div class="qsacts">';
+      if (!st.done) h += '<button class="qsbtn" data-sub' + (st.sel ? '' : ' disabled') + '>提交</button>';
+      else h += '<button class="qsbtn' + (idx < qs.length - 1 ? '' : ' ghost') + '" data-next>'
+             + (idx < qs.length - 1 ? '下一题' : '完成') + '</button>';
+      h += '</div>';
+      el.innerHTML = h;
+
+      var os = el.querySelectorAll('[data-k]');
+      for (var m = 0; m < os.length; m++){
+        (function(o){
+          o.onclick = function(){
+            if (st.done) return;
+            st.sel = o.getAttribute('data-k');
+            paint();
+          };
+        })(os[m]);
+      }
+      var sub = el.querySelector('[data-sub]');
+      if (sub) sub.onclick = function(){ if (st.sel){ st.done = true; paint(); } };
+      var nx = el.querySelector('[data-next]');
+      if (nx) nx.onclick = function(){
+        if (idx < qs.length - 1){ idx++; paint(); }
+        else { nx.textContent = '已完成'; nx.disabled = true; }
+      };
+    }
+    paint();
+    return el;
+  }
+
+  /* ---------- 错题存卡 ---------- */
+  function nodeWrong(b){
+    var el = document.createElement('div');
+    el.className = 'blk';
+    el.innerHTML = '<div class="wr"><div class="wr-h">' + rich(b.title || '把这道题和讲解存进错题本？')
+      + (b.body ? '<div style="margin-top:5px;color:#8b93a1;font-size:13.5px">' + rich(String(b.body).replace(/知识点\s*[:：][^\n]*/g, '').trim()) + '</div>' : '')
+      + '</div><div class="wr-acts"><button class="wrbtn ghost" data-no>不用了</button>'
+      + '<button class="wrbtn" data-yes>存错题</button></div></div>';
+    var kp = '';
+    var km = String(b.body || '').match(/知识点\s*[:：]\s*([^\n]+)/);
+    if (km) kp = km[1].trim();
+    var yes = el.querySelector('[data-yes]');
+    yes.onclick = function(){
+      callJava('onSaveWrong', kp);
+      yes.textContent = '已存入';
+      yes.disabled = true;
+    };
+    el.querySelector('[data-no]').onclick = function(){ el.style.opacity = '.45'; };
+    return el;
+  }
+
+  /* ---------- 翻转卡：正面问题 / 背面答案 ---------- */
+  function nodeFlip(b){
+    var el = document.createElement('div');
+    el.className = 'blk';
+    var rows = lines(b), h = '<div class="flipw">';
+    for (var i = 0; i < rows.length; i++){
+      var r = rows[i], k = r.indexOf('||');
+      if (k < 0) k = r.indexOf('｜｜');
+      var front = k > 0 ? r.slice(0, k) : r;
+      var back = k > 0 ? r.slice(k + 2) : '（点我再想一次）';
+      h += '<div class="flipc" data-back="' + esc(back).replace(/"/g, '\x26quot;') + '">'
+         + '<span class="fh">点我</span><span class="fc">' + rich(front) + '</span></div>';
+    }
+    h += '</div>';
+    el.innerHTML = withTitle(b, h);
+    var cs = el.querySelectorAll('.flipc');
+    for (var j = 0; j < cs.length; j++){
+      (function(c){
+        var open = false, keep = c.innerHTML;
+        c.onclick = function(){
+          open = !open;
+          if (open){
+            c.classList.add('on');
+            c.innerHTML = '<span class="fh">答案</span><span class="fc">'
+              + rich(c.getAttribute('data-back')) + '</span>';
+          } else {
+            c.classList.remove('on');
+            c.innerHTML = keep;
+          }
+        };
+      })(cs[j]);
+    }
+    return el;
+  }
+
+  /* ---------- 金句 / 素材卡 ---------- */
+  function nodeQuote(b){
+    var el = document.createElement('div');
+    el.className = 'blk';
+    el.innerHTML = '<div class="qt"><span class="qmark">“</span>' + rich(b.body || '')
+      + (b.title ? '<div class="qsrc">— ' + rich(b.title) + '</div>' : '') + '</div>';
+    return el;
+  }
+
+
+  function renderInto(parent, blocks){
+    // 与旧版一致的前缀 diff，只是父容器换成 turnEl
+    var talks = [], main = [];
+    for (var i=0;i<blocks.length;i++){
+      if (blocks[i].type === 'talk') talks.push(blocks[i]);
+      else main.push(blocks[i]);
+    }
+    var talkAll = talks.map(function(t){
+      return ((t.title||'') + (t.body ? '\n' + t.body : '')).trim();
+    }).join('\n').trim();
+
+    var same = 0;
+    while (same < main.length && same < turnSigs.length && turnSigs[same] === sig(main[same])) same++;
+    while (turnNodes.length > same){
+      var n = turnNodes.pop();
+      if (n && n.parentNode) n.parentNode.removeChild(n);
+    }
+
+    for (var j=same;j<main.length;j++){
+      var b = main[j], el, idx = j + 1;
+      if (b.type === 'plot') el = nodePlotIn(parent, b);
+      else if (b.type === 'note') el = nodeNote(b, idx);
+      else if (b.type === 'key') el = nodeKey(b);
+      else if (b.type === 'quiz') el = nodeQuiz(b);
+      else if (b.type === 'concept') el = nodeConcept(b);
+      else if (b.type === 'compare') el = nodeCompare(b);
+      else if (b.type === 'flow') el = nodeFlow(b);
+      else if (b.type === 'chart') el = nodeChart(b);
+      else if (b.type === 'formula') el = nodeFormula(b);
+      else if (b.type === 'ask') el = nodeAsk(b);
+      else if (b.type === 'overview') el = nodeOverview(b);
+      else if (b.type === 'mistake') el = nodeMistake(b);
+      else if (b.type === 'proscons') el = nodeProsCons(b);
+      else if (b.type === 'cause') el = nodeCause(b);
+      else if (b.type === 'table') el = nodeTable(b);
+      else if (b.type === 'tree') el = nodeTree(b);
+      else if (b.type === 'steps') el = nodeSteps(b);
+      else if (b.type === 'pie') el = nodePie(b, false);
+      else if (b.type === 'donut') el = nodePie(b, true);
+      else if (b.type === 'word') el = nodeWord(b);
+      else if (b.type === 'sentence') el = nodeSentence(b);
+      else if (b.type === 'hanzi') el = nodeHanzi(b);
+      else if (b.type === 'lexical') el = nodeLexical(b);
+      else if (b.type === 'letter') el = nodeLetter(b);
+      else if (b.type === 'poem') el = nodePoem(b);
+      else if (b.type === 'timeline') el = nodeTimeline(b);
+      else if (b.type === 'cycle') el = nodeCycle(b);
+      else if (b.type === 'quizset') el = nodeQuizSet(b);
+      else if (b.type === 'wrong') el = nodeWrong(b);
+      else if (b.type === 'flip') el = nodeFlip(b);
+      else if (b.type === 'quote') el = nodeQuote(b);
+      else el = nodeStep(b, idx);
+      if (b.type !== 'plot'){ parent.appendChild(el); }
+      turnNodes.push(el);
+    }
+    while (turnSigs.length > same) turnSigs.pop();
+    for (var k=same;k<main.length;k++) turnSigs.push(sig(main[k]));
+
+    // 讲稿（这一轮的）
+    if (talks.length > 0){
+      renderTalk(parent, talkAll, true);
+    }
+    reportHeight();
+  }
+
+  var GB = {
+    /** 用户说的一句话：插在板书流里的一条灰条 */
+    addUserLine: function(o){
+      var d = document.createElement('div');
+      d.className = 'usay';
+      d.innerHTML = '<span class="who">你</span>' + rich((o && o.text) || '');
+      var imgs = (o && o.imgs) || [];
+      for (var i=0;i<imgs.length;i++){
+        var im = document.createElement('img');
+        im.src = imgs[i];
+        d.appendChild(im);
+      }
+      board.appendChild(d);
+      turnEl = null; turnNodes = []; turnSigs = [];
+      reportHeight();
+    },
+
+    /** 开一轮新的 AI 回复 */
+    beginTurn: function(){
+      turnEl = document.createElement('div');
+      turnEl.className = 'turn';
+      board.appendChild(turnEl);
+      turnNodes = []; turnSigs = [];
+      reportHeight();
+    },
+
+    /** 更新当前回合的板书块 */
+    setTurnBlocks: function(blocks){
+      if (!Array.isArray(blocks)) return;
+      if (!turnEl){
+        turnEl = document.createElement('div');
+        turnEl.className = 'turn';
+        board.appendChild(turnEl);
+        turnNodes = []; turnSigs = [];
+      }
+      var tws = turnEl.querySelectorAll('.tw');
+      for (var q=0;q<tws.length;q++) turnEl.removeChild(tws[q]);
+      renderInto(turnEl, blocks);
+    },
+
+    setTyping: function(){
+      if (!turnEl) GB.beginTurn();
+      turnEl.innerHTML = '<div class="tw"><span class="typing-i"><i></i><i></i><i></i></span>'
+        + '<span class="typing-t">正在看题思考…</span></div>';
+      turnNodes = []; turnSigs = [];
+      reportHeight();
+    },
+
+    reset: function(){
+      board.innerHTML = '';
+      turnEl = null; turnNodes = []; turnSigs = [];
+      reportHeight();
+    },
+
+    highlight: function(idx){
+      var ts = board.querySelectorAll('.stitle');
+      for (var k=0;k<ts.length;k++){
+        ts[k].style.color = (k === idx) ? '#2f6bff' : '';
+      }
+    },
+
+    plainText: function(){ return (board.innerText || '').slice(0, 4000); }
+  };
+
+  window.GB = GB;
+
+  window.addEventListener('resize', reportHeight);
+  setTimeout(reportHeight, 200);
+})();
+</script>
+</body>
+</html>

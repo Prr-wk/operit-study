@@ -1,9 +1,10 @@
 {
   "schema_version": 1,
   "toolpkg_id": "com.operit.study_assistant",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "api_version": "1.0.1",
   "author": "Operit AI",
+  "logo": "package_logo",
   "main": "main.js",
   "display_name": {
     "zh": "学习助手",
@@ -42,6 +43,11 @@
     }
   ],
   "resources": [
+    {
+      "key": "package_logo",
+      "path": "resources/logo.png",
+      "mime": "image/png"
+    },
     {
       "key": "doubaoteacher_apk",
       "path": "resources/doubaoteacher.apk",
